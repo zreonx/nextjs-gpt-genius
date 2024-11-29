@@ -1,11 +1,19 @@
-import React from 'react'
+import Chat from '@/components/Chat';
+import {
+  dehydrate,
+  HydrationBoundary,
+  QueryClient,
+} from '@tanstack/react-query';
 
-const ChagePage = () => {
+const ChatPage = () => {
+  const queryClient = new QueryClient();
   return (
-    <div>
-      ChagePage
-    </div>
-  )
-}
+    <>
+      <HydrationBoundary state={dehydrate(queryClient)}>
+        <Chat />
+      </HydrationBoundary>
+    </>
+  );
+};
 
-export default ChagePage
+export default ChatPage;
