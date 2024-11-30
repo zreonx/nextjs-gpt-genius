@@ -81,13 +81,47 @@ export const getExistingTour = async ({ city, country }) => {
         country: capitalizedCountry,
       },
     },
-  })
+  });
 
   return tour;
 };
 
 export const createNewTour = async (tour) => {
   return prisma.tour.create({
-    data: tour
+    data: tour,
   });
+};
+
+export const getAllTours = async (searchTerm) => {
+  if (!searchTerm) {
+    const tours = await prisma.tour.findMany({
+      orderBy: {
+        city: 'asc',
+      },
+    });
+
+    return tours;
+  }
+
+  const tours = await prisma.tour.findMany({
+    where: {
+      OR: [
+        {
+          city: {
+            contains: searchTerm,
+            mode: 'insensitive', // Case-insensitive search for city
+          },
+        },
+        {
+          country: {
+            contains: searchTerm,
+            mode: 'insensitive', // Case-insensitive search for country
+          },
+        },
+      ],
+    },
+  });
+  
+
+  return tours;
 };
