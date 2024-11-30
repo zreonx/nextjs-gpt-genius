@@ -1,6 +1,7 @@
 'use server';
 import Groq from 'groq-sdk';
 import prisma from './db';
+import { revalidatePath } from 'next/cache';
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 export const generateChatResponse = async (chatMessages) => {
@@ -11,10 +12,14 @@ export const generateChatResponse = async (chatMessages) => {
         ...chatMessages,
       ],
       model: 'llama3-8b-8192',
+      max_tokens: 100,
     });
 
     console.log(response);
-    return response.choices[0].message;
+    return {
+      message: response.choices[0].message,
+      tokens: response.usage.total_tokens,
+    };
   } catch (error) {
     return null;
   }
@@ -59,7 +64,7 @@ export const generateTourResponse = async ({ city, country }) => {
       return null;
     }
 
-    return tourData.tour;
+    return { tour: tourData.tour, tokens: response.usage.total_tokens };
   } catch (error) {
     console.log(error);
     return null;
@@ -126,12 +131,11 @@ export const getAllTours = async (searchTerm) => {
 };
 
 export const getSingleTour = async (id) => {
-
   const isValidObjectId = (id) => /^[a-fA-F0-9]{24}$/.test(id);
 
   try {
-    if(!isValidObjectId) {
-      return null
+    if (!isValidObjectId) {
+      return null;
     }
 
     const tour = await prisma.tour.findUnique({
@@ -140,20 +144,66 @@ export const getSingleTour = async (id) => {
       },
     });
 
-    return tour 
+    return tour;
   } catch (error) {
-    
-    return null
+    return null;
   }
 };
 
-
-export const generateTourImage = async ({city, country}) => {
+export const generateTourImage = async ({ city, country }) => {
   try {
     // const tourImage = await
 
-    return null
+    return null;
+  } catch (error) {}
+};
+
+export const fetchUserTokensById = async (clerkId) => {
+  try {
+    const result = await prisma.token.findUniqueOrThrow({
+      where: {
+        clerkId,
+      },
+    });
+
+    return result?.tokens;
   } catch (error) {
-    
+    return null;
   }
-}
+};
+
+export const generateUserTokensForId = async (clerkId) => {
+  const result = await prisma.token.create({
+    data: {
+      clerkId,
+    },
+  });
+
+  return result?.tokens;
+};
+
+export const fetchOrGenerateTokens = async (clerkId) => {
+  const result = await fetchUserTokensById(clerkId);
+
+  if (result) {
+    return result.tokens;
+  }
+
+  return (await generateUserTokensForId(clerkId)).tokens;
+};
+
+export const subtractTokens = async (clerkId, tokens) => {
+  const result = await prisma.token.update({
+    where: {
+      clerkId,
+    },
+    data: {
+      tokens: {
+        decrement: tokens,
+      },
+    },
+  });
+
+  revalidatePath('/profile');
+  return result.tokens;
+};
