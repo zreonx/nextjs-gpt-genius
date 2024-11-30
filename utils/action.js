@@ -146,3 +146,14 @@ export const getSingleTour = async (id) => {
     return null
   }
 };
+
+
+export const generateTourImage = async ({city, country}) => {
+  try {
+    // const tourImage = await
+
+    return null
+  } catch (error) {
+    
+  }
+}
