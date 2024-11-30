@@ -1,5 +1,6 @@
 'use server';
 import Groq from 'groq-sdk';
+import prisma from './db';
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 export const generateChatResponse = async (chatMessages) => {
@@ -17,10 +18,6 @@ export const generateChatResponse = async (chatMessages) => {
   } catch (error) {
     return null;
   }
-};
-
-export const getExistingTour = async ({ city, country }) => {
-  return null;
 };
 
 export const generateTourResponse = async ({ city, country }) => {
@@ -55,12 +52,11 @@ export const generateTourResponse = async ({ city, country }) => {
     });
 
     console.log(response);
-    
 
-    const tourData = JSON.parse(response.choices[0].message.content)
+    const tourData = JSON.parse(response.choices[0].message.content);
 
-    if(!tourData.tour) {
-      return null
+    if (!tourData.tour) {
+      return null;
     }
 
     return tourData.tour;
@@ -69,6 +65,29 @@ export const generateTourResponse = async ({ city, country }) => {
     return null;
   }
 };
+
+export const getExistingTour = async ({ city, country }) => {
+  function capitalizeFirstLetter(str) {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  }
+
+  const capitalizedCity = capitalizeFirstLetter(city);
+  const capitalizedCountry = capitalizeFirstLetter(country);
+
+  const tour = await prisma.tour.findUnique({
+    where: {
+      city_country: {
+        city: capitalizedCity,
+        country: capitalizedCountry,
+      },
+    },
+  })
+
+  return tour;
+};
+
 export const createNewTour = async (tour) => {
-  return null;
+  return prisma.tour.create({
+    data: tour
+  });
 };
