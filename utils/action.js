@@ -121,7 +121,28 @@ export const getAllTours = async (searchTerm) => {
       ],
     },
   });
-  
 
   return tours;
+};
+
+export const getSingleTour = async (id) => {
+
+  const isValidObjectId = (id) => /^[a-fA-F0-9]{24}$/.test(id);
+
+  try {
+    if(!isValidObjectId) {
+      return null
+    }
+
+    const tour = await prisma.tour.findUnique({
+      where: {
+        id,
+      },
+    });
+
+    return tour 
+  } catch (error) {
+    
+    return null
+  }
 };
