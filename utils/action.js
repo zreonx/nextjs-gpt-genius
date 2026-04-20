@@ -11,7 +11,7 @@ export const generateChatResponse = async (chatMessages) => {
         { role: 'user', content: 'you are a helpful assistant' },
         ...chatMessages,
       ],
-      model: 'llama3-8b-8192',
+      model: 'llama-3.1-8b-instant',
       max_tokens: 100,
     });
 
